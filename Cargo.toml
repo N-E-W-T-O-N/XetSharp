@@ -1,0 +1,49 @@
+[package]
+name = "xetcore_native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies] 
+# Async runtime
+tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
+
+# Global runtime holder
+once_cell = "1.18"
+
+# Error handling
+anyhow = "1.0"
+
+# C ABI types
+libc = "0.2"
+
+# Xet-Core dependencies
+xet_config = { version = "0.14.5", path = "xet-core/xet_config" }
+xet_runtime = { version = "0.1.0", path = "xet-core/xet_runtime" }
+data = { version = "0.14.5", path = "xet-core/data" }
+progress_tracking = { version = "0.1.0", path = "xet-core/progress_tracking" }
+cas_client = { version = "0.14.5", path = "xet-core/cas_client" }
+xet_logging = { version = "0.14.5", path = "xet-core/xet_logging" }
+utils = { version = "0.14.5", path = "xet-core/utils" }
+error_printer = { version = "0.14.5", path = "xet-core/error_printer" }
+csbindgen = "1.9.7"
+
+# Uncomment ONE of these when ready
+
+# xet-core = { git = "https://github.com/huggingface/xet-core", branch = "main" }
+#xet-core = { path = "../xet-core" }
+
+
+[build-dependencies]
+csbindgen = "1.9.7"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+
