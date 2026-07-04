@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Runtime-only package: ships ONLY the win-x64 native (xetcore_native.dll).
+       Built via cargo for the x86_64-pc-windows-msvc target in release mode (windows runner). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>true</IsPackable>
+
+    <PackageId>XetSharp.runtime.win-x64</PackageId>
+    <Version>0.1.0</Version>
+    <Description>win-x64 native runtime for XetSharp (xet-core FFI).</Description>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\target\x86_64-pc-windows-msvc\release\xetcore_native.dll"
+          Condition="Exists('..\..\target\x86_64-pc-windows-msvc\release\xetcore_native.dll')"
+          Pack="true" PackagePath="runtimes/win-x64/native/xetcore_native.dll" />
+  </ItemGroup>
+
+</Project>

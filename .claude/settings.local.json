@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls examples/)",
+      "Bash(ls xet_client/src/)",
+      "Bash(ls hf_xet/src/)",
+      "Bash(docker exec *)"
+    ]
+  }
+}

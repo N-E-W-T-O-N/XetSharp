@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Runtime-only package: ships ONLY the osx-x64 native (libxetcore_native.dylib).
+       Built via cargo build for the x86_64-apple-darwin target in release mode (macOS runner). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>true</IsPackable>
+
+    <PackageId>XetSharp.runtime.osx-x64</PackageId>
+    <Version>0.1.0</Version>
+    <Description>osx-x64 native runtime for XetSharp (xet-core FFI).</Description>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\target\x86_64-apple-darwin\release\libxetcore_native.dylib"
+          Condition="Exists('..\..\target\x86_64-apple-darwin\release\libxetcore_native.dylib')"
+          Pack="true" PackagePath="runtimes/osx-x64/native/libxetcore_native.dylib" />
+  </ItemGroup>
+
+</Project>

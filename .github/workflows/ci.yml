@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build the native xetcore_native library for every target.
+  #   Linux runner:   linux-x64 (native), linux-arm64 (cargo-zigbuild).
+  #   Windows runner: win-x64 (native MSVC), win-arm64 (cross MSVC).
+  #   macOS runner:   osx-arm64 + osx-x64 (native, both SDKs present on the runner).
+  # Each job uploads its native binary AND its build log (log/error always uploaded).
+  # ---------------------------------------------------------------------------
+  native:
+    name: native-${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  rid: linux-x64,   triple: x86_64-unknown-linux-gnu,  tool: cargo,    lib: libxetcore_native.so }
+          - { os: ubuntu-latest,  rid: linux-arm64, triple: aarch64-unknown-linux-gnu, tool: zigbuild, lib: libxetcore_native.so }
+          - { os: windows-latest, rid: win-x64,     triple: x86_64-pc-windows-msvc,    tool: cargo,    lib: xetcore_native.dll }
+          - { os: windows-latest, rid: win-arm64,   triple: aarch64-pc-windows-msvc,   tool: cargo,    lib: xetcore_native.dll }
+          - { os: macos-latest,   rid: osx-arm64,   triple: aarch64-apple-darwin,      tool: cargo,    lib: libxetcore_native.dylib }
+          - { os: macos-latest,   rid: osx-x64,     triple: x86_64-apple-darwin,       tool: cargo,    lib: libxetcore_native.dylib }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.triple }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.rid }}
+
+      - name: Ensure cmake (for aws-lc-sys)
+        shell: bash
+        run: cmake --version || (command -v brew && brew install cmake) || (sudo apt-get update && sudo apt-get install -y cmake)
+
+      - name: Install NASM (Windows, required by aws-lc-sys/MSVC)
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Install cargo-zigbuild + zig
+        if: matrix.tool == 'zigbuild'
+        shell: bash
+        run: |
+          python3 -m pip install --user ziglang || python3 -m pip install --break-system-packages ziglang
+          cargo install cargo-zigbuild --locked
+
+      - name: Build (release)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          if [ "${{ matrix.tool }}" = "zigbuild" ]; then
+            cargo zigbuild --release --target ${{ matrix.triple }} 2>&1 | tee logs/build-${{ matrix.rid }}.log
+          else
+            cargo build   --release --target ${{ matrix.triple }} 2>&1 | tee logs/build-${{ matrix.rid }}.log
+          fi
+
+      - name: Upload native binary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: target/${{ matrix.triple }}/release/${{ matrix.lib }}
+          if-no-files-found: warn
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-build-${{ matrix.rid }}
+          path: logs/build-${{ matrix.rid }}.log
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Build the native lib (debug) and run the xUnit v3 interop tests on linux-x64.
+  # Uploads test results + logs whether or not the tests pass.
+  # ---------------------------------------------------------------------------
+  test:
+    name: test-linux-x64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: test
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build native (debug)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          cargo build 2>&1 | tee logs/cargo-build.log
+
+      - name: Run tests
+        id: test
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet test XetSharp.Tests/XetSharp.Tests.csproj -c Release \
+            --logger "trx;LogFileName=results.trx" \
+            --results-directory testresults 2>&1 | tee logs/dotnet-test.log
+
+      - name: Upload test results + logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            testresults/**
+            logs/**
+
+      - name: Fail job if tests failed
+        if: steps.test.outcome == 'failure'
+        run: exit 1
+
+  # ---------------------------------------------------------------------------
+  # Gather every native binary and produce the split NuGet package set:
+  #   XetSharp (meta) + XetSharp.runtime.<rid> per built RID.
+  # ---------------------------------------------------------------------------
+  pack:
+    name: pack-nuget
+    needs: [native]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download all native binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: .   # recreates target/<triple>/release/<lib> for each RID
+
+      - name: Show gathered natives
+        shell: bash
+        run: find target -name 'xetcore_native*' -o -name 'libxetcore_native*' 2>/dev/null || true
+
+      - name: Pack
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs artifacts
+          dotnet pack XetSharp/XetSharp.csproj -c Release -o artifacts 2>&1 | tee -a logs/pack.log
+          for proj in packaging/*/XetSharp.runtime.*.csproj; do
+            echo "::group::pack $proj"
+            if dotnet pack "$proj" -c Release -o artifacts 2>&1 | tee -a logs/pack.log; then :; \
+            else echo "::warning::skipped $proj (native missing for this RID?)"; fi
+            echo "::endgroup::"
+          done
+          ls -1 artifacts/*.nupkg
+
+      - name: Upload NuGet packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: artifacts/*.nupkg
+          if-no-files-found: warn
+
+      - name: Upload pack log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-pack
+          path: logs/pack.log
+          if-no-files-found: warn

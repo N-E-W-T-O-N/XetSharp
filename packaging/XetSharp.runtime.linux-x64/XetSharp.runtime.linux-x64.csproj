@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runtime-only package: ships ONLY the linux-x64 native binary under runtimes/linux-x64/native/.
+    No managed code (IncludeBuildOutput=false). Pulled in automatically for linux-x64 consumers via
+    the runtime.json graph in the meta XetSharp package. Build the native lib first with:
+      cargo build for the x86_64-unknown-linux-gnu target in release mode.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>true</IsPackable>
+
+    <PackageId>XetSharp.runtime.linux-x64</PackageId>
+    <Version>0.1.0</Version>
+    <Description>linux-x64 native runtime for XetSharp (xet-core FFI).</Description>
+    <!-- NU5128: a runtimes-only package has no lib/ref assets; that is intentional. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\target\x86_64-unknown-linux-gnu\release\libxetcore_native.so"
+          Condition="Exists('..\..\target\x86_64-unknown-linux-gnu\release\libxetcore_native.so')"
+          Pack="true" PackagePath="runtimes/linux-x64/native/libxetcore_native.so" />
+  </ItemGroup>
+
+</Project>
