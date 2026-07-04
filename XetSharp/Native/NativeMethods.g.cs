@@ -18,17 +18,64 @@ namespace XetSharp
 
 
 
-        [DllImport(__DllName, EntryPoint = "xet_add", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_add(int a, int b);
+        /// <summary>
+        ///  Chunks and uploads `file_path` into the local CAS directory `cas_dir`.
+        ///
+        ///  The string written to `*out_result` is owned by the caller and MUST be released
+        ///  with [`xet_string_free`]. See [`finish`] for return codes.
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_upload_file", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int xet_upload_file(byte* cas_dir, byte* file_path, byte** out_result);
 
-        [DllImport(__DllName, EntryPoint = "xet_sub", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_sub(int a, int b);
+        /// <summary>
+        ///  Chunks and uploads `file_path` to a remote CAS `endpoint` authenticated with `token`.
+        ///
+        ///  `token_expiration` is epoch seconds (`0` = no expiry). `repo` may be null/empty.
+        ///  The string written to `*out_result` is owned by the caller and MUST be released
+        ///  with [`xet_string_free`]. See [`finish`] for return codes.
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_upload_file_remote", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int xet_upload_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* file_path, byte** out_result);
 
-        [DllImport(__DllName, EntryPoint = "xet_multi", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_multi(int a, int b);
+        /// <summary>
+        ///  Reconstructs the file with Merkle `hash` from the local CAS directory `cas_dir` into `dest_path`.
+        ///
+        ///  `file_size` may be `0` if unknown. On success `*out_result` holds `{"bytes_written":N}`.
+        ///  The string written to `*out_result` is owned by the caller and MUST be released
+        ///  with [`xet_string_free`]. See [`finish`] for return codes.
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_download_file", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int xet_download_file(byte* cas_dir, byte* hash, ulong file_size, byte* dest_path, byte** out_result);
 
-        [DllImport(__DllName, EntryPoint = "xet_div", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_div(int a, int b);
+        /// <summary>
+        ///  Reconstructs the file with Merkle `hash` from a remote CAS `endpoint` into `dest_path`.
+        ///
+        ///  `token_expiration` is epoch seconds (`0` = no expiry). `repo` may be null/empty.
+        ///  `file_size` may be `0` if unknown. On success `*out_result` holds `{"bytes_written":N}`.
+        ///  The string written to `*out_result` is owned by the caller and MUST be released
+        ///  with [`xet_string_free`]. See [`finish`] for return codes.
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_download_file_remote", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int xet_download_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* hash, ulong file_size, byte* dest_path, byte** out_result);
+
+        /// <summary>
+        ///  Initializes file logging for xet-core's `tracing` output at `log_path`.
+        ///
+        ///  Idempotent; the log level is controlled by the `XET_LOG` env var (default `info`).
+        ///  See [`finish`] for return codes; on error `*out_result` receives the message (may be null).
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_init_logging", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int xet_init_logging(byte* log_path, byte** out_result);
+
+        /// <summary>
+        ///  Frees a string previously returned by this library through an out-parameter.
+        ///
+        ///  # Safety
+        ///  `ptr` must be null or a pointer obtained from a `xet_*` function in this library,
+        ///  and must not be used after this call.
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "xet_string_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void xet_string_free(byte* ptr);
 
 
     }

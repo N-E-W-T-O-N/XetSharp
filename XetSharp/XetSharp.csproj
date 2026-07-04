@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
@@ -7,11 +7,38 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <!-- Meta package: managed assembly + runtime.json. Contains NO native binaries; those ship in
+       the per-RID XetSharp.runtime.<rid> packages, pulled in via the runtime graph below. -->
+  <PropertyGroup>
+    <PackageId>XetSharp</PackageId>
+    <Version>0.1.0</Version>
+    <Description>.NET bindings for hf-xet (HuggingFace xet-core): chunked, deduplicated CAS upload/download.</Description>
+  </PropertyGroup>
+
+  <!-- runtime.json maps each RID to its native runtime package, so a consumer restoring for
+       linux-x64 downloads only the linux-x64 native, not every arch. -->
   <ItemGroup>
-    <Content Include="xetcore_native.dll">
+    <None Include="runtime.json" Pack="true" PackagePath="runtime.json" />
+  </ItemGroup>
+
+  <!--
+    Native libraries for LOCAL DEV / TEST only (Pack=false): copied into the output so
+    `dotnet run` / `dotnet test` work straight from the build tree, but NOT packed into the meta
+    NuGet (the runtime packages own those). Placed under runtimes/<rid>/native/ for the resolver.
+      linux-x64   : cargo build                       (target/debug)
+      linux-arm64 : cargo zigbuild for aarch64        (target/aarch64-unknown-linux-gnu/debug)
+  -->
+  <ItemGroup>
+    <Content Include="..\target\debug\libxetcore_native.so"
+             Link="runtimes\linux-x64\native\libxetcore_native.so"
+             Pack="false"
+             Condition="Exists('..\target\debug\libxetcore_native.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="xetcore_native.pdb">
+    <Content Include="..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so"
+             Link="runtimes\linux-arm64\native\libxetcore_native.so"
+             Pack="false"
+             Condition="Exists('..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
