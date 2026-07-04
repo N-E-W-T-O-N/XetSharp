@@ -6,44 +6,32 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
-[dependencies] 
-# Async runtime
-tokio = { version = "1.37", features = ["rt-multi-thread", "macros"] }
+[dependencies]
+# xet-core engine (git submodule, pinned to v1.5.1).
+# Crate package names use hyphens; imported in Rust as `xet_data` / `xet_runtime`.
+xet_data = { package = "xet-data", path = "xet-core/xet_data" }
+xet_runtime = { package = "xet-runtime", path = "xet-core/xet_runtime" }
+xet_client = { package = "xet-client", path = "xet-core/xet_client" }  # AuthConfig for remote uploads
 
-# Global runtime holder
-once_cell = "1.18"
-
-# Error handling
+# Error handling and JSON result marshalling across the FFI boundary.
 anyhow = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
-# C ABI types
-libc = "0.2"
-
-# Xet-Core dependencies
-xet_config = { version = "0.14.5", path = "xet-core/xet_config" }
-xet_runtime = { version = "0.1.0", path = "xet-core/xet_runtime" }
-data = { version = "0.14.5", path = "xet-core/data" }
-progress_tracking = { version = "0.1.0", path = "xet-core/progress_tracking" }
-cas_client = { version = "0.14.5", path = "xet-core/cas_client" }
-xet_logging = { version = "0.14.5", path = "xet-core/xet_logging" }
-utils = { version = "0.14.5", path = "xet-core/utils" }
-error_printer = { version = "0.14.5", path = "xet-core/error_printer" }
-csbindgen = "1.9.7"
-
-# Uncomment ONE of these when ready
-
-# xet-core = { git = "https://github.com/huggingface/xet-core", branch = "main" }
-#xet-core = { path = "../xet-core" }
-
+# File logging for xet-core's `tracing` output.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+tracing-appender = "0.2"
 
 [build-dependencies]
-csbindgen = "1.9.7"
+csbindgen = "1.9.8"
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
-panic = "abort"
+# NOTE: must stay "unwind" (the default). The FFI shim relies on
+# std::panic::catch_unwind to stop Rust panics from crossing into the CLR;
+# `panic = "abort"` would defeat that and hard-kill the .NET host process.
+panic = "unwind"
 strip = true
-
-
