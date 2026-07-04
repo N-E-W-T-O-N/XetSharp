@@ -155,12 +155,30 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: native-*
-          merge-multiple: true
-          path: .   # recreates target/<triple>/release/<lib> for each RID
+          path: _natives   # each artifact lands in _natives/native-<rid>/<lib>
 
-      - name: Show gathered natives
+      - name: Stage natives into target/<triple>/release
         shell: bash
-        run: find target -name 'xetcore_native*' -o -name 'libxetcore_native*' 2>/dev/null || true
+        run: |
+          set -euo pipefail
+          declare -A TRIPLE=(
+            [linux-x64]=x86_64-unknown-linux-gnu
+            [linux-arm64]=aarch64-unknown-linux-gnu
+            [win-x64]=x86_64-pc-windows-msvc
+            [win-arm64]=aarch64-pc-windows-msvc
+            [osx-x64]=x86_64-apple-darwin
+            [osx-arm64]=aarch64-apple-darwin
+          )
+          for d in _natives/native-*; do
+            rid="${d##*/native-}"
+            triple="${TRIPLE[$rid]:-}"
+            if [ -z "$triple" ]; then echo "::warning::no triple mapping for $rid"; continue; fi
+            dst="target/$triple/release"
+            mkdir -p "$dst"
+            cp "$d"/* "$dst"/
+            echo "staged $rid -> $dst/"
+          done
+          find target -path '*/release/*xetcore_native*' | sort
 
       - name: Pack
         shell: bash
@@ -171,10 +189,22 @@ jobs:
           for proj in packaging/*/XetSharp.runtime.*.csproj; do
             echo "::group::pack $proj"
             if dotnet pack "$proj" -c Release -o artifacts 2>&1 | tee -a logs/pack.log; then :; \
-            else echo "::warning::skipped $proj (native missing for this RID?)"; fi
+            else echo "::warning::pack failed for $proj"; fi
             echo "::endgroup::"
           done
-          ls -1 artifacts/*.nupkg
+          ls -1 artifacts/*.nupkg || true
+
+      - name: Verify every staged RID produced a runtime package
+        shell: bash
+        run: |
+          set -euo pipefail
+          staged=$(ls -d _natives/native-* 2>/dev/null | wc -l)
+          pkgs=$(ls artifacts/XetSharp.runtime.*.nupkg 2>/dev/null | wc -l)
+          echo "staged natives: $staged, runtime packages: $pkgs"
+          if [ "$pkgs" -ne "$staged" ]; then
+            echo "::error::expected $staged runtime packages, got $pkgs"
+            exit 1
+          fi
 
       - name: Upload NuGet packages
         if: always()
