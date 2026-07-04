@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			// Builds the Rust cdylib (debug, with symbols) -> target/debug/libxetcore_native.so
+			// and regenerates the csbindgen C# bindings via build.rs.
+			"label": "cargo build",
+			"type": "shell",
+			"command": "cargo",
+			"args": ["build"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": ["$rustc"],
+			"presentation": { "reveal": "silent", "clear": true }
+		},
+		{
+			// Builds the .NET side. Depends on the native lib existing first, since the csproj
+			// copies it into runtimes/<rid>/native/ in the output.
+			"label": "build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": ["build", "XetSharp.sln"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"dependsOn": ["cargo build"],
+			"dependsOrder": "sequence",
+			"problemMatcher": ["$msCompile"],
+			"group": { "kind": "build", "isDefault": true }
+		},
+		{
+			"label": "cargo clean",
+			"type": "shell",
+			"command": "cargo",
+			"args": ["clean"],
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": []
+		}
+	]
+}

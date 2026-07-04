@@ -1,0 +1,42 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		
+		{
+			// Debug the C# / managed side (XetTest). Set breakpoints in Client.cs / Program.cs.
+			// Builds Rust + .NET first. The native FFI runs, but Rust breakpoints are NOT hit
+			// here (coreclr debugs managed code only) — use the LLDB config below for that.
+			"name": ".NET: Debug XetTest (C#)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "build",
+			"program": "${workspaceFolder}/XetTest/bin/Debug/net10.0/XetTest.dll",
+			"cwd": "${workspaceFolder}/XetTest",
+			"console": "integratedTerminal",
+			"stopAtEntry": false
+			// To exercise a real remote upload, add:
+			// "env": { "XET_ENDPOINT": "https://...", "XET_TOKEN": "<jwt>", "XET_REPO": "user/model" }
+		},
+		{
+			// Debug the Rust FFI / native side. Launches the app's native apphost under LLDB so
+			// breakpoints in src/lib.rs bind before the .so loads. Managed C# breakpoints are NOT
+			// hit here (LLDB debugs native code only).
+			"name": "Rust FFI: Debug native (LLDB)",
+			"type": "lldb",
+			"request": "launch",
+			"preLaunchTask": "build",
+			"program": "${workspaceFolder}/XetTest/bin/Debug/net10.0/XetTest",
+			"cwd": "${workspaceFolder}/XetTest",
+			"sourceLanguages": ["rust"]
+		},
+		{
+			// Attach LLDB to an already-running instance to break in native Rust code.
+			// Useful for long-running processes; pick the XetTest process when prompted.
+			"name": "Rust FFI: Attach (LLDB)",
+			"type": "lldb",
+			"request": "attach",
+			"pid": "${command:pickProcess}",
+			"sourceLanguages": ["rust"]
+		}
+	]
+}
