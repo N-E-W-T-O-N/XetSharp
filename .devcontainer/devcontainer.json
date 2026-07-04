@@ -1,0 +1,26 @@
+{
+	"name": "XetSharp (.NET + Rust)",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+	"features": {
+		"ghcr.io/devcontainers/features/dotnet:2": {
+			"version": "10.0"
+		},
+		"ghcr.io/devcontainers/features/rust:1": {
+			"version": "latest",
+			"profile": "default"
+		}
+	},
+	// xet-core is a git submodule; initialize it so the Rust crate can resolve its path deps.
+	"onCreateCommand": "git submodule update --init --recursive",
+	// Warm the build caches. `;` (not `&&`) so dotnet restore still runs if cargo build fails.
+	"postCreateCommand": "cargo build ; dotnet restore XetSharp.sln",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rust-lang.rust-analyzer",
+				"ms-dotnettools.csdevkit",
+				"tamasfe.even-better-toml"
+			]
+		}
+	}
+}
