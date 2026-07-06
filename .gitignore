@@ -485,3 +485,4 @@ $RECYCLE.BIN/
 
 # Rustup toolchains
 target
+.claude/settings.local.json
