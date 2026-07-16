@@ -12,6 +12,12 @@ concurrency:
 permissions:
   contents: read
 
+# Run every JS action on Node 24 instead of the deprecated Node 20 runtime, without
+# churning each action's version. Per GitHub's Node 20 deprecation changelog (2025-09-19):
+# https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   # ---------------------------------------------------------------------------
   # Build the native xetcore_native library for every target.
