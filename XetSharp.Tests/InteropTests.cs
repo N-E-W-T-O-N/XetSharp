@@ -114,6 +114,31 @@ public sealed class InteropTests : IDisposable
     }
 
     [Fact]
+    public void UploadFileRemote_InvokesTokenRefreshCallbackAcrossFfi()
+    {
+        // An already-expired token (epoch second 1) forces xet-core to call our refresher on the
+        // first authenticated request. The callback throwing makes the op fail fast without a real
+        // hub — what we assert is that the callback crossed the FFI boundary and was invoked.
+        int refreshCalls = 0;
+        TokenRefreshCallback refresh = () =>
+        {
+            Interlocked.Increment(ref refreshCalls);
+            throw new InvalidOperationException("no real hub in test");
+        };
+
+        var ex = Assert.Throws<XetException>(() =>
+            _client.UploadFileRemote(
+                endpoint: "http://127.0.0.1:9",     // nothing listening -> fast failure
+                token: "expired",
+                filePath: WriteSampleFile("refresh.bin", blocks: 1),
+                tokenRefresh: refresh,
+                tokenExpiration: 1));
+
+        Assert.True(refreshCalls >= 1, $"token refresh callback was not invoked (calls={refreshCalls})");
+        Assert.NotEqual(0, ex.Code);
+    }
+
+    [Fact]
     public void InitLogging_WritesLogFile()
     {
         string logPath = Path.Combine(_workDir, "xet.log");

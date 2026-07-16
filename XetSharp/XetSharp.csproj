@@ -5,6 +5,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Function-pointer syntax (delegate* unmanaged) in the generated NativeMethods needs C# 9+;
+         netstandard2.1 defaults lower, so pin the language version. -->
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <!-- Meta package: managed assembly + runtime.json. Contains NO native binaries; those ship in
@@ -24,21 +27,24 @@
   <!--
     Native libraries for LOCAL DEV / TEST only (Pack=false): copied into the output so
     `dotnet run` / `dotnet test` work straight from the build tree, but NOT packed into the meta
-    NuGet (the runtime packages own those). Placed under runtimes/<rid>/native/ for the resolver.
-      linux-x64   : cargo build                       (target/debug)
-      linux-arm64 : cargo zigbuild for aarch64        (target/aarch64-unknown-linux-gnu/debug)
+    NuGet (the runtime packages own those).
+
+    The host `cargo build` output (target/debug) is copied FLAT next to the assembly — the
+    resolver's flat fallback is host-arch-agnostic, so the same rows work on any OS/arch runner
+    (linux .so, windows .dll, macos .dylib; only the host's file exists). The cross-compiled
+    aarch64 row keeps the runtimes/<rid>/ layout for qemu-style testing.
   -->
   <ItemGroup>
-    <Content Include="..\target\debug\libxetcore_native.so"
-             Link="runtimes\linux-x64\native\libxetcore_native.so"
-             Pack="false"
-             Condition="Exists('..\target\debug\libxetcore_native.so')">
+    <Content Include="..\target\debug\libxetcore_native.so" Link="libxetcore_native.so" Pack="false" Condition="Exists('..\target\debug\libxetcore_native.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so"
-             Link="runtimes\linux-arm64\native\libxetcore_native.so"
-             Pack="false"
-             Condition="Exists('..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so')">
+    <Content Include="..\target\debug\xetcore_native.dll" Link="xetcore_native.dll" Pack="false" Condition="Exists('..\target\debug\xetcore_native.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\target\debug\libxetcore_native.dylib" Link="libxetcore_native.dylib" Pack="false" Condition="Exists('..\target\debug\libxetcore_native.dylib')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so" Link="runtimes\linux-arm64\native\libxetcore_native.so" Pack="false" Condition="Exists('..\target\aarch64-unknown-linux-gnu\debug\libxetcore_native.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

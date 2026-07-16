@@ -18,6 +18,9 @@ anyhow = "1.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Implementing xet-core's async TokenRefresher trait (C# token-refresh callback).
+async-trait = "0.1"
+
 # File logging for xet-core's `tracing` output.
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }

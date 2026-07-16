@@ -31,11 +31,14 @@ namespace XetSharp
         ///  Chunks and uploads `file_path` to a remote CAS `endpoint` authenticated with `token`.
         ///
         ///  `token_expiration` is epoch seconds (`0` = no expiry). `repo` may be null/empty.
+        ///  `refresh_cb`/`free_cb`/`cb_state` are optional: when `refresh_cb` (and `free_cb`) are non-null,
+        ///  xet-core calls back into the caller to fetch a fresh token once the current one nears expiry.
+        ///  Pass null for all three to use `token` as-is.
         ///  The string written to `*out_result` is owned by the caller and MUST be released
         ///  with [`xet_string_free`]. See [`finish`] for return codes.
         /// </summary>
         [DllImport(__DllName, EntryPoint = "xet_upload_file_remote", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_upload_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* file_path, byte** out_result);
+        internal static extern int xet_upload_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* file_path, delegate* unmanaged[Cdecl]<void*, byte**, ulong*, int> refresh_cb, delegate* unmanaged[Cdecl]<byte*, void> free_cb, void* cb_state, byte** out_result);
 
         /// <summary>
         ///  Reconstructs the file with Merkle `hash` from the local CAS directory `cas_dir` into `dest_path`.
@@ -56,7 +59,7 @@ namespace XetSharp
         ///  with [`xet_string_free`]. See [`finish`] for return codes.
         /// </summary>
         [DllImport(__DllName, EntryPoint = "xet_download_file_remote", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int xet_download_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* hash, ulong file_size, byte* dest_path, byte** out_result);
+        internal static extern int xet_download_file_remote(byte* endpoint, byte* token, ulong token_expiration, byte* repo, byte* hash, ulong file_size, byte* dest_path, delegate* unmanaged[Cdecl]<void*, byte**, ulong*, int> refresh_cb, delegate* unmanaged[Cdecl]<byte*, void> free_cb, void* cb_state, byte** out_result);
 
         /// <summary>
         ///  Initializes file logging for xet-core's `tracing` output at `log_path`.
