@@ -160,6 +160,25 @@ jobs:
         run: exit 1
 
   # ---------------------------------------------------------------------------
+  # Live Hub check: validates the HF_TOKEN secret against the real Hub (whoami-v2).
+  # The test self-skips when HF_TOKEN is empty (forks, or before the secret is set),
+  # so this job stays green until a valid token is provided, then verifies it for real.
+  # Managed-only (no native/cargo needed — whoami does not cross the FFI boundary).
+  # ---------------------------------------------------------------------------
+  hub-test:
+    name: hub-test-live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Run live Hub tests
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: dotnet test Huggingface.Tests/Huggingface.Tests.csproj -c Release
+
+  # ---------------------------------------------------------------------------
   # Gather every native binary and produce the split NuGet package set:
   #   XetSharp (meta) + XetSharp.runtime.<rid> per built RID.
   # ---------------------------------------------------------------------------

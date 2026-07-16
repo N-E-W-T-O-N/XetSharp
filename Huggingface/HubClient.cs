@@ -81,6 +81,20 @@ public sealed class HubClient : IDisposable
     }
 
     /// <summary>
+    /// Validates <see cref="Token"/> against the Hub's <c>whoami-v2</c> endpoint and returns the
+    /// authenticated account name. Throws (401) if the token is missing or invalid — a cheap way to
+    /// confirm credentials before attempting a transfer.
+    /// </summary>
+    public async Task<string> WhoAmIAsync(CancellationToken ct = default)
+    {
+        using var resp = await SendAsync(HttpMethod.Get, $"{Endpoint}/api/whoami-v2", ct);
+        resp.EnsureSuccessStatusCode();
+        using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        return doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+    }
+
+    /// <summary>
     /// Downloads a file over classic HTTP via the Hub's <c>resolve</c> endpoint (works for any file,
     /// Xet-backed or not — Xet is an optimization, not a requirement for correctness).
     /// </summary>
