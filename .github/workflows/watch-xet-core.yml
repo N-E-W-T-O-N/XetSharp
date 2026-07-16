@@ -63,13 +63,15 @@ jobs:
       - name: Commit updated state
         run: |
           set -euo pipefail
-          if git diff --quiet -- .github/xet-core-tags.txt 2>/dev/null; then
+          # Stage first so a brand-new (untracked) seed file is detected too —
+          # `git diff` alone only sees tracked files.
+          git add .github/xet-core-tags.txt
+          if git diff --cached --quiet; then
             echo "State unchanged."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/xet-core-tags.txt
-          # [skip ci] so this bookkeeping commit does not trigger the build/test workflow.
-          git commit -m "chore: update seen xet-core tags [skip ci]"
+          # skip-ci marker keeps this bookkeeping commit from triggering the build workflow.
+          git commit -m "chore(bot): update seen xet-core tags [skip ci]"
           git push
