@@ -92,9 +92,23 @@ jobs:
   # Build the native lib (debug) and run the xUnit v3 interop tests on linux-x64.
   # Uploads test results + logs whether or not the tests pass.
   # ---------------------------------------------------------------------------
+  # Runs the FFI interop test suite on every OS/arch we can EXECUTE on hosted runners.
+  # Each job builds the host-native debug lib (flat-copied next to the test assembly by
+  # XetSharp.csproj) and runs the full xUnit suite through the real P/Invoke boundary.
+  # The arm64 runners (ubuntu-24.04-arm, windows-11-arm) are free for PUBLIC repos only.
   test:
-    name: test-linux-x64
-    runs-on: ubuntu-latest
+    name: test-${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,    rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+          - { os: windows-latest,   rid: win-x64 }
+          - { os: windows-11-arm,   rid: win-arm64 }
+          - { os: macos-latest,     rid: osx-arm64 }
+          - { os: macos-15-intel,   rid: osx-x64 }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,10 +116,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          key: test
+          key: test-${{ matrix.rid }}
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      - name: Install NASM (Windows, required by aws-lc-sys/MSVC)
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Ensure cmake (for aws-lc-sys)
+        shell: bash
+        run: cmake --version || (command -v brew && brew install cmake) || (sudo apt-get update && sudo apt-get install -y cmake)
 
       - name: Build native (debug)
         shell: bash
@@ -128,7 +150,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.rid }}
           path: |
             testresults/**
             logs/**
@@ -221,3 +243,33 @@ jobs:
           name: log-pack
           path: logs/pack.log
           if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # On a version tag (v*), attach the full NuGet package set to a GitHub Release.
+  # Uses the workflow's built-in GITHUB_TOKEN — no extra secrets required.
+  # Cut a release with:  git tag v0.1.0 && git push origin v0.1.0
+  # ---------------------------------------------------------------------------
+  release:
+    name: github-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, pack]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the release + upload assets
+    steps:
+      - name: Download packed NuGets
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: artifacts
+
+      - name: Create GitHub Release with packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ls -1 artifacts/*.nupkg
+          gh release create "${GITHUB_REF_NAME}" artifacts/*.nupkg \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "XetSharp ${GITHUB_REF_NAME}" \
+            --generate-notes
