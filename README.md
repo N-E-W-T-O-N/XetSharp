@@ -7,6 +7,10 @@ The goal is to bring `hf-xet`'s chunked upload/download to the .NET ecosystem by
 Rust `xet-core` crates behind a C ABI and calling them from C# via P/Invoke, instead of the
 plain-HTTP path the current .NET Hub clients use.
 
+> **Maintainers:** start with [HANDOFF.md](HANDOFF.md) (project state, pending work, decision log)
+> and [.claude/skills/working-on-xetsharp/SKILL.md](.claude/skills/working-on-xetsharp/SKILL.md)
+> (dev workflow + trap table — also auto-discovered by Claude Code).
+
 ## Layout
 
 | Path | What it is |
@@ -176,6 +180,13 @@ string remote = client.UploadFileRemote(
 
 // ... and the matching remote download:
 client.DownloadFileRemote("https://cas-server.huggingface.co", "<cas-jwt>", "<hash>", "out.safetensors");
+
+// Long-running session: supply a refresh callback; xet-core calls it when the token nears expiry.
+client.UploadFileRemote(
+    endpoint: "https://cas-server.huggingface.co",
+    token: "",                                   // may be empty; the callback provides it
+    filePath: "model.safetensors",
+    tokenRefresh: () => (FetchFreshJwtFromHub(), DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds()));
 ```
 
 Upload calls return JSON with the file's Merkle `hash`, `file_size`, `sha256`, and deduplication
@@ -221,6 +232,9 @@ dotnet test XetSharp.Tests/XetSharp.Tests.csproj # 7 tests: upload, download rou
   serialization, and byte-exact reconstruction from a Merkle hash.
 - **Remote upload + download** — `UploadFileRemote` / `DownloadFileRemote` talk to a CAS endpoint
   (e.g. the HuggingFace Hub) using a caller-supplied bearer token. Same engine, different transport.
+- **Automatic token refresh** — an optional `TokenRefreshCallback` (a C# delegate) is marshalled
+  across FFI via `SetDllImportResolver`-style function pointers; xet-core invokes it when the token
+  nears expiry (verified: the callback fires across the boundary). Net5+ overloads.
 - **File logging** — `InitLogging` routes xet-core's `tracing` output to a file (level via `XET_LOG`).
 - **Cross-platform loading** — `SetDllImportResolver` over a `runtimes/<rid>/native/` layout.
 - **linux-x64 + linux-arm64** — native lib builds for both (arm64 cross-compiled with
@@ -230,9 +244,6 @@ dotnet test XetSharp.Tests/XetSharp.Tests.csproj # 7 tests: upload, download rou
 - **xUnit v3 interop tests** — 7 tests crossing the FFI boundary (`XetSharp.Tests`), all passing.
 
 **Planned:**
-- **Automatic token refresh.** Remote ops use the token as-is until expiry; refreshing mid-session
-  needs a C# `TokenRefresher` callback marshalled across FFI. Not needed when a valid token covers
-  the operation.
 - **Session-handle API** for multi-file uploads in one dedup session.
 - **More platforms** — win-x64 (zigbuild) and osx-* (macOS runner) native builds, each adding a
   `XetSharp.runtime.<rid>` package + a `runtime.json` entry — plus a **CI matrix** to build and

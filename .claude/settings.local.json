@@ -5,7 +5,8 @@
       "Bash(ls xet_client/src/)",
       "Bash(ls hf_xet/src/)",
       "Bash(docker exec *)",
-      "PowerShell($dir = \"C:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\--wsl-localhost-ubuntu-26-04-home-user-XetSharp\\\\626df6f2-f381-439d-9c8b-535ed3c4d42c\\\\scratchpad\\\\ci-28707138495\"; Get-ChildItem -Recurse -File $dir | ForEach-Object { \"{0,10}  {1}\" -f $_.Length, \\($_.FullName.Substring\\($dir.Length+1\\)\\) })"
+      "PowerShell($dir = \"C:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\--wsl-localhost-ubuntu-26-04-home-user-XetSharp\\\\626df6f2-f381-439d-9c8b-535ed3c4d42c\\\\scratchpad\\\\ci-28707138495\"; Get-ChildItem -Recurse -File $dir | ForEach-Object { \"{0,10}  {1}\" -f $_.Length, \\($_.FullName.Substring\\($dir.Length+1\\)\\) })",
+      "Bash(wsl.exe -d Ubuntu-26.04 bash -lc 'cd /home/user/XetSharp && git status --short | head -40; echo \"---branch---\"; git branch --show-current')"
     ]
   }
 }
