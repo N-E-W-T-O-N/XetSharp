@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- huggingface_hub-style orchestration layer: repo info + Xet detection + token fetch,
+       routing large-file transfers through the XetSharp engine (or classic HTTP resolve). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XetSharp\XetSharp.csproj" />
+  </ItemGroup>
+
+</Project>
