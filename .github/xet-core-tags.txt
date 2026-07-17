@@ -3,7 +3,6 @@
 git-xet-v0.1.0
 git-xet-v0.2.0
 git-xet-v0.2.1
-v0.0.0
 v0.1.0
 v0.1.1
 v0.1.2
@@ -69,9 +68,5 @@ v1.4.1
 v1.4.2
 v1.4.3
 v1.5.1
-v1.5.1-dev0
-v1.5.1-dev1
-v1.5.1-rc0
-v1.5.1-rc1
-v1.5.2-rc0
+v1.5.2
 v20241218-00-dedup-upload-ctrlc
