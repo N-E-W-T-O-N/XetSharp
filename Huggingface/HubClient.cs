@@ -91,7 +91,7 @@ public sealed class HubClient : IDisposable
         resp.EnsureSuccessStatusCode();
         using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-        return doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+        return doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() ?? String.Empty : String.Empty;
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public sealed class HubClient : IDisposable
         string repoId, string filename, string destPath, string repoType = "model",
         string revision = "main", CancellationToken ct = default)
     {
-        string prefix = repoType == "model" ? "" : $"{repoType}s/";
+        string prefix = repoType == "model" ? String.Empty : $"{repoType}s/";
         string url = $"{Endpoint}/{prefix}{repoId}/resolve/{Uri.EscapeDataString(revision)}/{filename}";
 
         using var resp = await SendAsync(HttpMethod.Get, url, ct);
