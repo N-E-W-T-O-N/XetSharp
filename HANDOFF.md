@@ -7,7 +7,7 @@ non-obvious decisions with their reasons. The day-to-day gotchas live in the pro
 
 ## 1. Architecture in one paragraph
 
-`src/lib.rs` is a panic-safe C-ABI shim over xet-core (git submodule, pinned `v1.5.1`) compiled to
+`src/lib.rs` is a panic-safe C-ABI shim over xet-core (git submodule, pinned `v1.6.0`) compiled to
 `xetcore_native`. `csbindgen` (in `build.rs`) regenerates `XetSharp/Native/NativeMethods.g.cs` on
 every `cargo build`. `XetSharp/Client.cs` is the managed API; `NativeMethods.Loader.cs` resolves
 the right native binary per OS/arch at runtime. `Huggingface/` is the `huggingface_hub`-style

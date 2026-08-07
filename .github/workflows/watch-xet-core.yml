@@ -53,7 +53,7 @@ jobs:
 
           echo "New tag(s):"; echo "$new"
           list=$(echo "$new" | sed 's/^/- /')
-          body=$(printf 'huggingface/xet-core published new tag(s):\n\n%s\n\nCurrent submodule pin: **v1.5.1**. Review the changes and consider bumping the `xet-core` submodule.\n\nAll tags: https://github.com/%s/tags' "$list" "$UPSTREAM")
+          body=$(printf 'huggingface/xet-core published new tag(s):\n\n%s\n\nCurrent submodule pin: **v1.6.0**. Review the changes and consider bumping the `xet-core` submodule.\n\nAll tags: https://github.com/%s/tags' "$list" "$UPSTREAM")
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "xet-core: new tag(s) detected" \
             --body "$body"

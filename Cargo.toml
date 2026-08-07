@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-# xet-core engine (git submodule, pinned to v1.5.1).
+# xet-core engine (git submodule, pinned to v1.6.0).
 # Crate package names use hyphens; imported in Rust as `xet_data` / `xet_runtime`.
 xet_data = { package = "xet-data", path = "xet-core/xet_data" }
 xet_runtime = { package = "xet-runtime", path = "xet-core/xet_runtime" }
