@@ -73,4 +73,5 @@ v1.5.3-dev0
 v1.6.0
 v1.6.0-dev0
 v1.6.0-rc0
+v1.6.1-a0
 v20241218-00-dedup-upload-ctrlc
