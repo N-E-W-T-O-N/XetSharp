@@ -78,5 +78,6 @@ v1.7.0
 v1.7.0-dev0
 v1.7.0-dev1
 v1.7.0-rc0
+v1.7.1-rc0
 v1.8.0-dev0
 v20241218-00-dedup-upload-ctrlc
