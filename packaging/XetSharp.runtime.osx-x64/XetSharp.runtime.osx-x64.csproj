@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
 
     <PackageId>XetSharp.runtime.osx-x64</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.8.0</Version>
     <Description>osx-x64 native runtime for XetSharp (xet-core FFI).</Description>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>

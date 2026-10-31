@@ -272,7 +272,7 @@ jobs:
   # ---------------------------------------------------------------------------
   # On a version tag (v*), attach the full NuGet package set to a GitHub Release.
   # Uses the workflow's built-in GITHUB_TOKEN — no extra secrets required.
-  # Cut a release with:  git tag v0.1.0 && git push origin v0.1.0
+  # Cut a release with:  git tag v1.8.0 && git push origin v1.8.0
   # ---------------------------------------------------------------------------
   release:
     name: github-release
