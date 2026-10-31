@@ -215,6 +215,7 @@ fn remote_session(
         custom_headers: None,
         repo_paths: if repo.is_empty() { vec!["".into()] } else { vec![repo.to_string()] },
         session_id: None,
+        cache_root: None,
     })
 }
 
