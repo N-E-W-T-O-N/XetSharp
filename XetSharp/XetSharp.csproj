@@ -14,7 +14,7 @@
        the per-RID XetSharp.runtime.<rid> packages, pulled in via the runtime graph below. -->
   <PropertyGroup>
     <PackageId>XetSharp</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.8.0</Version>
     <Description>.NET bindings for hf-xet (HuggingFace xet-core): chunked, deduplicated CAS upload/download.</Description>
   </PropertyGroup>
 

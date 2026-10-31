@@ -15,7 +15,7 @@
     <IsPackable>true</IsPackable>
 
     <PackageId>XetSharp.runtime.linux-arm64</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.8.0</Version>
     <Description>linux-arm64 native runtime for XetSharp (xet-core FFI).</Description>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>

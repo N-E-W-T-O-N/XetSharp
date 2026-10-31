@@ -15,7 +15,7 @@
     <IsPackable>true</IsPackable>
 
     <PackageId>XetSharp.runtime.linux-x64</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.8.0</Version>
     <Description>linux-x64 native runtime for XetSharp (xet-core FFI).</Description>
     <!-- NU5128: a runtimes-only package has no lib/ref assets; that is intentional. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
